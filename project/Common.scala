@@ -22,7 +22,7 @@ object Common {
     organization := "com.hhandoko",
     name := "realworld",
     version := using(Source.fromFile("VERSION.txt")) { _.mkString },
-    scalaVersion := "2.12.10",
+    scalaVersion := "2.13.1",
     libraryDependencies ++= Seq(
       "ch.qos.logback"        %  "logback-classic"        % logbackVersion,
       "com.auth0"             %  "java-jwt"               % oauthJwtVersion,

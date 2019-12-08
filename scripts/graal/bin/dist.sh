@@ -61,7 +61,7 @@ clean_dist_folder() {
 create_assembly() {
     echo "${C_YELLOW}Packaging into uber-jar${C_RESET}"
     sbt -mem 4096 assembly
-    cp target/scala-2.12/${APP_JAR} ${DIST_FOLDER}
+    cp target/scala-2.13/${APP_JAR} ${DIST_FOLDER}
 }
 
 # Create native image in the distribution folder

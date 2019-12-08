@@ -29,7 +29,7 @@ ENV         APP_VERSION ${APP_VERSION:-1.0.0-SNAPSHOT}
 
 WORKDIR     packager
 RUN         gu install native-image
-COPY        --from=assembler /assembler/target/scala-2.12/${APP_NAME}-${APP_VERSION}.jar ./
+COPY        --from=assembler /assembler/target/scala-2.13/${APP_NAME}-${APP_VERSION}.jar ./
 RUN         native-image \
               --no-server \
               -cp ${APP_NAME}-${APP_VERSION}.jar
