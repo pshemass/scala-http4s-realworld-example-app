@@ -12,7 +12,7 @@ object Common {
   private val doobieVersion     = "0.8.7"
   private val flywayVersion     = "6.1.2"
   private val h2Version         = "1.4.200"
-  private val http4sVersion     = "0.21.0-M6"
+  private val http4sVersion     = "0.21.0"
   private val logbackVersion    = "1.2.3"
   private val oauthJwtVersion   = "3.8.2"
   private val postgresVersion   = "42.2.9"
