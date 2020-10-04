@@ -4,27 +4,29 @@ import scala.io.Source
 import io.github.davidmweber.FlywayPlugin.autoImport._
 import sbt.Keys._
 import sbt._
+import sbtassembly._
+import sbtassembly.AssemblyKeys._
 
 object Common {
 
   // Dependency versions
-  private val circeVersion      = "0.12.3"
-  private val doobieVersion     = "0.8.7"
-  private val flywayVersion     = "6.1.2"
+  private val circeVersion      = "0.13.0"
+  private val doobieVersion     = "0.9.2"
+  private val flywayVersion     = "7.0.0"
   private val h2Version         = "1.4.200"
-  private val http4sVersion     = "0.21.0"
+  private val http4sVersion     = "0.21.7"
   private val logbackVersion    = "1.2.3"
-  private val oauthJwtVersion   = "3.8.2"
-  private val postgresVersion   = "42.2.9"
-  private val pureConfigVersion = "0.12.1"
-  private val specs2Version     = "4.8.1"
+  private val oauthJwtVersion   = "3.11.0"
+  private val postgresVersion   = "42.2.16"
+  private val pureConfigVersion = "0.14.0"
+  private val specs2Version     = "4.10.3"
 
   // Compiler plugin dependency versions
   private val kindProjectorVersion    = "0.11.0"
   private val betterMonadicForVersion = "0.3.1"
 
   final val settings: Seq[Setting[_]] =
-    projectSettings ++ dependencySettings ++ flywaySettings ++ compilerPlugins
+    projectSettings ++ dependencySettings ++ flywaySettings ++ compilerPlugins ++ assemblySettings
 
   private[this] def projectSettings = Seq(
     organization := "com.hhandoko",
@@ -32,6 +34,14 @@ object Common {
     version := using(Source.fromFile("VERSION.txt")) { _.mkString },
     scalaVersion := "2.12.10",
   )
+
+  private[this] def assemblySettings = Seq(
+    assemblyMergeStrategy in assembly := {
+  case "module-info.class" => MergeStrategy.discard
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+})
 
   private[this] def dependencySettings = Seq(
     libraryDependencies ++= Seq(

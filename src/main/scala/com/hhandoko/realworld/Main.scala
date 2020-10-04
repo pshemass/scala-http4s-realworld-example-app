@@ -1,12 +1,11 @@
 package com.hhandoko.realworld
 
-import cats.effect.{ExitCode, IO, IOApp}
-import cats.implicits._
+import cats.effect.{ExitCode, IO, IOApp, Blocker}
 
 object Main extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
-    Server.run[IO]
+    Blocker[IO].flatMap(Server.run[IO])
       .use(_ => IO.never.as(ExitCode.Success))
 
 }

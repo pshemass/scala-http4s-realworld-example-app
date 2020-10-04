@@ -17,9 +17,13 @@ import com.hhandoko.realworld.profile.{ProfileRoutes, ProfileService}
 import com.hhandoko.realworld.tag.{TagRoutes, TagService}
 import com.hhandoko.realworld.user.{UserRoutes, UserService}
 
+import scala.concurrent.ExecutionContext.global
+import org.http4s.server.middleware.CORS
+
+
 object Server {
 
-  def run[F[_]: ConcurrentEffect: ContextShift: Timer]: Resource[F, BlazeServer[F]] = {
+  def run[F[_]: ConcurrentEffect: ContextShift: Timer](bloker: Blocker): Resource[F, BlazeServer[F]] = {
     val authenticator = new RequestAuthenticator[F]()
     val articleService = ArticleService.impl[F]
     val authService = AuthService.impl[F]
@@ -34,17 +38,17 @@ object Server {
       UserRoutes[F](authenticator, userService)
 
     for {
-      conf <- config[F]
+      conf <- config[F](bloker)
       _    <- transactor[F](conf.db)
-      rts   = loggedRoutes(conf, routes)
+      rts   = loggedRoutes(conf, CORS(routes))
       svr  <- server[F](conf, rts)
     } yield svr
   }
 
-  private[this] def config[F[_]: Sync]: Resource[F, Config] = {
+  private[this] def config[F[_]: Sync: ContextShift](blocker: Blocker): Resource[F, Config] = {
     import pureconfig.generic.auto._
 
-    Resource.liftF(loadConfigF[F, Config])
+    Resource.liftF(loadConfigF[F, Config](blocker))
   }
 
   private[this] def loggedRoutes[F[_]: ConcurrentEffect](conf: Config, routes: HttpRoutes[F]): HttpRoutes[F] =
@@ -56,7 +60,7 @@ object Server {
   ): Resource[F, BlazeServer[F]] = {
     import org.http4s.implicits._
 
-    BlazeServerBuilder[F]
+    BlazeServerBuilder[F](global)
       .bindHttp(config.server.port, config.server.host)
       .withHttpApp(routes.orNotFound)
       .resource
