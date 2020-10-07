@@ -1,16 +1,17 @@
 package com.hhandoko.realworld.profile
 
 import scala.concurrent.ExecutionContext
-import cats.effect.{ContextShift, IO}
+import cats.effect.{ ContextShift, IO }
 import org.http4s._
 import org.http4s.implicits._
 import org.specs2.Specification
 import org.specs2.matcher.MatchResult
-import com.hhandoko.realworld.core.{Profile, Username}
+import com.hhandoko.realworld.core.{ Profile, Username }
 import com.hhandoko.realworld.http
 import com.hhandoko.realworld.http.ProfileRoutes
 
-class ProfileRoutesSpec extends Specification { def is = s2"""
+class ProfileRoutesSpec extends Specification {
+  def is = s2"""
 
   Profile routes
     when record exists
@@ -35,7 +36,8 @@ class ProfileRoutesSpec extends Specification { def is = s2"""
 
     val getProfile = Request[IO](Method.GET, uri"/api/profile/abc")
 
-    http.ProfileRoutes[IO](FakeProfileService)
+    http
+      .ProfileRoutes[IO](FakeProfileService)
       .orNotFound(getProfile)
       .unsafeRunSync()
   }
@@ -44,7 +46,9 @@ class ProfileRoutesSpec extends Specification { def is = s2"""
     retFoundProfile.status must beEqualTo(Status.Ok)
 
   private[this] def foundReturnsProfile: MatchResult[String] =
-    retFoundProfile.as[String].unsafeRunSync() must beEqualTo("""{"profile":{"username":"celeb_1","bio":null,"image":null,"following":false}}""")
+    retFoundProfile.as[String].unsafeRunSync() must beEqualTo(
+      """{"profile":{"username":"celeb_1","bio":null,"image":null,"following":false}}"""
+    )
 
   private[this] def notFoundReturns404: MatchResult[Status] =
     retNotFoundProfile.status must beEqualTo(Status.NotFound)

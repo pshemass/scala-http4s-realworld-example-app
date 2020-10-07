@@ -3,26 +3,25 @@ package com.hhandoko.realworld
 import java.util.UUID
 import javax.sql.DataSource
 
-import cats.effect.{ContextShift, IO, Resource}
+import cats.effect.{ ContextShift, IO, Resource }
 import doobie.implicits._
 import doobie.util.ExecutionContexts
 import doobie.util.fragment.Fragment
 import doobie.util.transactor.Transactor
 import org.flywaydb.core.Flyway
 import org.h2.jdbcx.JdbcDataSource
-import org.specs2.specification.{BeforeAll, BeforeEach}
+import org.specs2.specification.{ BeforeAll, BeforeEach }
 
-trait RepoSpecSupport extends BeforeAll
-  with BeforeEach {
+trait RepoSpecSupport extends BeforeAll with BeforeEach {
 
   def instance: String
 
   private[this] final val TABLES = Seq("profile", "auth")
 
-  private[this] final val SCHEMA_LOCATION = "filesystem:db/migration/h2"
+  private[this] final val SCHEMA_LOCATION   = "filesystem:db/migration/h2"
   private[this] final val DRIVER_CLASS_NAME = "org.h2.Driver"
-  private[this] final val USERNAME = "sa"
-  private[this] final val PASSWORD = ""
+  private[this] final val USERNAME          = "sa"
+  private[this] final val PASSWORD          = ""
 
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContexts.synchronous)
 
@@ -40,7 +39,8 @@ trait RepoSpecSupport extends BeforeAll
     Transactor.fromDriverManager[IO](DRIVER_CLASS_NAME, url, USERNAME, PASSWORD)
 
   def beforeAll(): Unit = {
-    Flyway.configure()
+    Flyway
+      .configure()
       .dataSource(ds)
       .locations(SCHEMA_LOCATION)
       .load()
@@ -49,16 +49,17 @@ trait RepoSpecSupport extends BeforeAll
   }
 
   def before: Unit =
-    Resource.fromAutoCloseable(IO(ds.getConnection())).use { conn =>
-      IO {
-        TABLES
-          .reverse
-          .foreach { tableName =>
+    Resource
+      .fromAutoCloseable(IO(ds.getConnection()))
+      .use { conn =>
+        IO {
+          TABLES.reverse.foreach { tableName =>
             conn.nativeSQL(s"TRUNCATE TABLE ${tableName} RESTART IDENTITY")
             conn.commit()
           }
+        }
       }
-    }.unsafeRunSync()
+      .unsafeRunSync()
 
   protected def execute(fr: Fragment): Unit = {
     fr.update.run.transact(transactor).unsafeRunSync()

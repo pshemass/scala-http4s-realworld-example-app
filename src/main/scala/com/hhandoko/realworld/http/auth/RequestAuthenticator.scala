@@ -1,18 +1,18 @@
 package com.hhandoko.realworld.http.auth
 
 import cats.Monad
-import cats.data.{Kleisli, OptionT}
+import cats.data.{ Kleisli, OptionT }
 import org.http4s.server.AuthMiddleware
 import org.http4s.util.CaseInsensitiveString
-import org.http4s.{AuthedRoutes, Header, HttpRoutes, Request}
+import org.http4s.{ AuthedRoutes, Header, HttpRoutes, Request }
 
 import com.hhandoko.realworld.core.Username
 
 class RequestAuthenticator[F[_]: Monad] extends JwtSupport {
 
-  private final val HEADER_NAME = CaseInsensitiveString("Authorization")
-  private final val HEADER_VALUE_PREFIX = "Token"
-  private final val HEADER_VALUE_SEPARATOR = " "
+  private final val HEADER_NAME              = CaseInsensitiveString("Authorization")
+  private final val HEADER_VALUE_PREFIX      = "Token"
+  private final val HEADER_VALUE_SEPARATOR   = " "
   private final val HEADER_VALUE_START_INDEX =
     HEADER_VALUE_PREFIX.length + HEADER_VALUE_SEPARATOR.length
 
@@ -31,7 +31,7 @@ class RequestAuthenticator[F[_]: Monad] extends JwtSupport {
 
   private[this] def authorizationHeader(header: Header): Boolean =
     header.name == HEADER_NAME &&
-    header.value.startsWith(HEADER_VALUE_PREFIX + HEADER_VALUE_SEPARATOR)
+      header.value.startsWith(HEADER_VALUE_PREFIX + HEADER_VALUE_SEPARATOR)
 
   private[this] def getTokenValue(header: Header): JwtToken =
     JwtToken(header.value.substring(HEADER_VALUE_START_INDEX))

@@ -2,7 +2,7 @@ package com.hhandoko.realworld.profile
 
 import cats.Applicative
 
-import com.hhandoko.realworld.core.{Profile, Username}
+import com.hhandoko.realworld.core.{ Profile, Username }
 
 trait ProfileService[F[_]] {
   def get(username: Username): F[Option[Profile]]

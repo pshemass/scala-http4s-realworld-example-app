@@ -1,18 +1,19 @@
 package com.hhandoko.realworld.user
 
 import scala.concurrent.ExecutionContext
-import cats.effect.{ContextShift, IO}
+import cats.effect.{ ContextShift, IO }
 import org.http4s._
 import org.http4s.implicits._
 import org.specs2.Specification
 import org.specs2.matcher.MatchResult
-import com.hhandoko.realworld.http.auth.{JwtToken, RequestAuthenticator}
-import com.hhandoko.realworld.core.{Profile, User, Username}
+import com.hhandoko.realworld.http.auth.{ JwtToken, RequestAuthenticator }
+import com.hhandoko.realworld.core.{ Profile, User, Username }
 import com.hhandoko.realworld.http
 import com.hhandoko.realworld.http.UserRoutes
 import com.hhandoko.realworld.repositories.UserRepo
 
-class UserRoutesSpec extends Specification { def is = s2"""
+class UserRoutesSpec extends Specification {
+  def is                             = s2"""
 
   User routes
     when logged in
@@ -21,8 +22,10 @@ class UserRoutesSpec extends Specification { def is = s2"""
     when not logged in
       should return 401 Unauthorized status   $uriReturns401
   """
-  private[this] val nonExpiringToken = JwtToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJyZWFsd29ybGQiLCJ1c2VybmFtZSI6ImZhbW91cyJ9.c3ghryIJayjtL3wL4j2KSEeLBXUd5U8ALbdSQBau2Qg")
-  private[this] val invalidToken = "invalid.jwt.token"
+  private[this] val nonExpiringToken = JwtToken(
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJyZWFsd29ybGQiLCJ1c2VybmFtZSI6ImZhbW91cyJ9.c3ghryIJayjtL3wL4j2KSEeLBXUd5U8ALbdSQBau2Qg"
+  )
+  private[this] val invalidToken     = "invalid.jwt.token"
 
   private[this] val retCurrentUser: Response[IO] = {
     implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
@@ -47,7 +50,8 @@ class UserRoutesSpec extends Specification { def is = s2"""
       headers = Headers.of(Header("Authorization", s"Token ${invalidToken}"))
     )
 
-    http.UserRoutes[IO](new RequestAuthenticator[IO], FakeUserRepo)
+    http
+      .UserRoutes[IO](new RequestAuthenticator[IO], FakeUserRepo)
       .orNotFound(getCurrentUser)
       .unsafeRunSync()
   }
@@ -56,7 +60,9 @@ class UserRoutesSpec extends Specification { def is = s2"""
     retCurrentUser.status must beEqualTo(Status.Ok)
 
   private[this] def uriReturnsUserInfo: MatchResult[String] =
-    retCurrentUser.as[String].unsafeRunSync() must beEqualTo(s"""{"user":{"email":"famous@test.com","token":"${nonExpiringToken.value}","username":"famous","bio":null,"image":null}}""")
+    retCurrentUser.as[String].unsafeRunSync() must beEqualTo(
+      s"""{"user":{"email":"famous@test.com","token":"${nonExpiringToken.value}","username":"famous","bio":null,"image":null}}"""
+    )
 
   private[this] def uriReturns401: MatchResult[Status] =
     retUnauthorized.status must beEqualTo(Status.Unauthorized)

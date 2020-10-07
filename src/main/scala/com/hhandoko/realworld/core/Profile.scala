@@ -19,7 +19,7 @@ final case class User(
   bio: Option[String],
   image: Option[String],
   email: String,
-  token: JwtToken,
+  token: JwtToken
 ) extends ProfileAttributes
 
 final case class Author(

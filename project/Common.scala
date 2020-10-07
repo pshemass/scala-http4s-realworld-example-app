@@ -31,31 +31,30 @@ object Common {
   private[this] def projectSettings = Seq(
     organization := "com.hhandoko",
     name := "realworld",
-    version := using(Source.fromFile("VERSION.txt")) { _.mkString },
-    scalaVersion := "2.12.10",
+    version := using(Source.fromFile("VERSION.txt"))(_.mkString),
+    scalaVersion := "2.12.10"
   )
 
-  private[this] def assemblySettings = Seq(
-    assemblyMergeStrategy in assembly := {
-  case "module-info.class" => MergeStrategy.discard
-  case x =>
-    val oldStrategy = (assemblyMergeStrategy in assembly).value
-    oldStrategy(x)
-})
+  private[this] def assemblySettings = Seq(assemblyMergeStrategy in assembly := {
+    case "module-info.class" => MergeStrategy.discard
+    case x                   =>
+      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
+  })
 
   private[this] def dependencySettings = Seq(
     libraryDependencies ++= Seq(
-      "ch.qos.logback"        %  "logback-classic"        % logbackVersion,
-      "com.auth0"             %  "java-jwt"               % oauthJwtVersion,
+      "ch.qos.logback"         % "logback-classic"        % logbackVersion,
+      "com.auth0"              % "java-jwt"               % oauthJwtVersion,
       "com.github.pureconfig" %% "pureconfig"             % pureConfigVersion,
       "com.github.pureconfig" %% "pureconfig-cats-effect" % pureConfigVersion,
-      "com.h2database"        %  "h2"                     % h2Version % Test,
+      "com.h2database"         % "h2"                     % h2Version     % Test,
       "io.circe"              %% "circe-generic"          % circeVersion,
-      "org.flywaydb"          %  "flyway-core"            % flywayVersion % Test,
+      "org.flywaydb"           % "flyway-core"            % flywayVersion % Test,
       "org.http4s"            %% "http4s-blaze-server"    % http4sVersion,
       "org.http4s"            %% "http4s-circe"           % http4sVersion,
       "org.http4s"            %% "http4s-dsl"             % http4sVersion,
-      "org.postgresql"        %  "postgresql"             % postgresVersion,
+      "org.postgresql"         % "postgresql"             % postgresVersion,
       "org.tpolecat"          %% "doobie-core"            % doobieVersion,
       "org.tpolecat"          %% "doobie-h2"              % doobieVersion % Test,
       "org.tpolecat"          %% "doobie-hikari"          % doobieVersion,
@@ -68,11 +67,10 @@ object Common {
   private[this] def compilerPlugins = Seq(
     // Add syntax for type lambdas
     // See: https://github.com/non/kind-projector
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % kindProjectorVersion cross CrossVersion.full),
-
+    addCompilerPlugin("org.typelevel" %% "kind-projector"     % kindProjectorVersion cross CrossVersion.full),
     // Desugaring scala `for` without implicit `withFilter`s
     // See: https://github.com/oleg-py/better-monadic-for
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % betterMonadicForVersion)
+    addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % betterMonadicForVersion)
   )
 
   private[this] def flywaySettings = Seq(
@@ -80,14 +78,13 @@ object Common {
     flywayUrl := "jdbc:postgresql://0.0.0.0:5432/postgres",
     flywayUser := "postgres",
     flywayPassword := "S3cret!",
-
     // Separate the schema and seed, as unit tests does not require seed test data
     flywayLocations := Seq("filesystem:db/migration/postgresql", "filesystem:db/seed")
   )
 
   /**
    * Basic auto-closing implementation for closeable resource.
-   * 
+   *
    * @param res Closeable resource.
    * @param fn Lambda function performing resource operations.
    * @tparam T Resource type parameters.
@@ -95,6 +92,7 @@ object Common {
    * @return Lambda function result.
    */
   private[this] def using[T <: Closeable, U](res: T)(fn: T => U): U =
-    try { fn(res) } finally { res.close() }
+    try fn(res)
+    finally res.close()
 
 }

@@ -25,3 +25,6 @@ addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
 // Pass partial unification Scala compiler flag
 // See: https://github.com/fiadliel/sbt-partial-unification
 addSbtPlugin("org.lyranthe.sbt" % "partial-unification" % "1.1.2")
+
+// Formats code
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")

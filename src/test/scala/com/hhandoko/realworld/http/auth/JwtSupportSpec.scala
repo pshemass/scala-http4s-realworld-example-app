@@ -7,7 +7,8 @@ import org.specs2.matcher.MatchResult
 
 import com.hhandoko.realworld.core.Username
 
-class JwtSupportSpec extends Specification { def is = s2"""
+class JwtSupportSpec extends Specification {
+  def is = s2"""
 
   JWT support trait
     should generate token with valid username   $tokenHasValidUsername

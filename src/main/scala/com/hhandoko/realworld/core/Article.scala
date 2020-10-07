@@ -22,4 +22,3 @@ final case class Comment(
   body: String,
   author: Author
 )
-

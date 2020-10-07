@@ -1,13 +1,13 @@
 package com.hhandoko.realworld.http.auth
 
 import cats.Applicative
-import cats.effect.{ContextShift, Sync}
+import cats.effect.{ ContextShift, Sync }
 import cats.implicits._
 import io.circe.generic.auto._
-import io.circe.{Encoder, Json}
+import io.circe.{ Encoder, Json }
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
-import org.http4s.{EntityEncoder, HttpRoutes}
+import org.http4s.{ EntityEncoder, HttpRoutes }
 
 object AuthRoutes extends UnauthorizedResponseSupport {
 
@@ -31,26 +31,33 @@ object AuthRoutes extends UnauthorizedResponseSupport {
           data   <- req.as[LoginPost]
           authed <- authService.verify(data.user.email, data.user.password)
           res    <- authed.fold(
-            err => Unauthorized(withChallenge(err)),
-            usr => Ok(UserResponse(usr.email, usr.token.value, usr.username.value, usr.bio, usr.image))
-          )
+                      err => Unauthorized(withChallenge(err)),
+                      usr => Ok(UserResponse(usr.email, usr.token.value, usr.username.value, usr.bio, usr.image))
+                    )
         } yield res
     }
   }
 
   // TODO: Duplicated in UserRoutes, consolidate
-  final case class UserResponse(email: String, token: String, username: String, bio: Option[String], image: Option[String])
+  final case class UserResponse(
+    email: String,
+    token: String,
+    username: String,
+    bio: Option[String],
+    image: Option[String]
+  )
 
   object UserResponse {
-    implicit val encoder: Encoder[UserResponse] = (r: UserResponse) => Json.obj(
-      "user" -> Json.obj(
-        "email"    -> Json.fromString(r.email),
-        "token"    -> Json.fromString(r.token),
-        "username" -> Json.fromString(r.username),
-        "bio"      -> r.bio.fold(Json.Null)(Json.fromString),
-        "image"    -> r.image.fold(Json.Null)(Json.fromString)
+    implicit val encoder: Encoder[UserResponse] = (r: UserResponse) =>
+      Json.obj(
+        "user" -> Json.obj(
+          "email"    -> Json.fromString(r.email),
+          "token"    -> Json.fromString(r.token),
+          "username" -> Json.fromString(r.username),
+          "bio"      -> r.bio.fold(Json.Null)(Json.fromString),
+          "image"    -> r.image.fold(Json.Null)(Json.fromString)
+        )
       )
-    )
 
     implicit def entityEncoder[F[_]: Applicative]: EntityEncoder[F, UserResponse] =
       jsonEncoderOf[F, UserResponse]
