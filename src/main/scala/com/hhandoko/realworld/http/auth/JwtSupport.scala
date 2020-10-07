@@ -1,11 +1,11 @@
-package com.hhandoko.realworld.auth
+package com.hhandoko.realworld.http.auth
 
 import scala.util.Try
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 
-import com.hhandoko.realworld.core.{JwtToken, Username}
+import com.hhandoko.realworld.core.Username
 
 trait JwtSupport {
 

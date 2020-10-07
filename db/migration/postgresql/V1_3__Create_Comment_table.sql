@@ -1,18 +1,17 @@
 -- Table: Authentication
 -- ~~~~~~
-CREATE TABLE IF NOT EXISTS article(
+CREATE TABLE IF NOT EXISTS comment(
     id          BIGSERIAL NOT NULL,
-    slag        VARCHAR NOT NULL,
-    title       VARCHAR NOT NULL,
-    description VARCHAR NOT NULL,
+    article_id  BIGINT    NOT NULL,
     body        VARCHAR NOT NULL,
     created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     author_username      VARCHAR    NOT NULL,
-    CONSTRAINT pk_article_id      PRIMARY KEY (id),
-    CONSTRAINT fk_article_profile FOREIGN KEY (author_username) REFERENCES profile (username)
+    CONSTRAINT pk_comment_id      PRIMARY KEY (id),
+    CONSTRAINT fk_comment_profile FOREIGN KEY (author_username) REFERENCES profile (username),
+    CONSTRAINT fk_comment_article FOREIGN KEY (article_id) REFERENCES article (id)
 );
 
-CREATE INDEX IF NOT EXISTS ix_article_slag_username
+CREATE INDEX IF NOT EXISTS ix_article_slag
     ON article
     USING btree (lower(slag));

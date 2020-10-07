@@ -1,4 +1,4 @@
-package com.hhandoko.realworld.auth
+package com.hhandoko.realworld.http.auth
 
 import cats.Monad
 import cats.data.{Kleisli, OptionT}
@@ -6,7 +6,7 @@ import org.http4s.server.AuthMiddleware
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.{AuthedRoutes, Header, HttpRoutes, Request}
 
-import com.hhandoko.realworld.core.{JwtToken, Username}
+import com.hhandoko.realworld.core.Username
 
 class RequestAuthenticator[F[_]: Monad] extends JwtSupport {
 

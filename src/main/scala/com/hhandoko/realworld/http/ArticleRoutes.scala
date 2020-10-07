@@ -1,43 +1,35 @@
-package com.hhandoko.realworld.article
+package com.hhandoko.realworld.http
 
 import java.time.format.DateTimeFormatter
 
 import cats.Applicative
 import cats.effect.{ContextShift, Sync}
 import cats.implicits._
-import com.hhandoko.realworld.HttpError
-import com.hhandoko.realworld.auth.RequestAuthenticator
+import com.hhandoko.realworld.repositories.CommentRepository
+import com.hhandoko.realworld.http.auth.RequestAuthenticator
+import com.hhandoko.realworld.core.{Article, Comment, Tag, Username}
+import com.hhandoko.realworld.repositories.{ArticleRepository, CommentRepository, UserRepo}
 import io.circe._
-import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
-import org.http4s.{AuthedRoutes, EntityEncoder, HttpRoutes}
-import com.hhandoko.realworld.core.{Article, Tag, Username}
-import com.hhandoko.realworld.user.UserRepo
+import org.http4s.{AuthedRoutes, EntityEncoder, HttpRoutes, _}
 
 object ArticleRoutes {
 
-  def apply[F[_]: ContextShift: Sync](articleRepository: ArticleRepository[F], userRepo: UserRepo[F], auth: RequestAuthenticator[F]): HttpRoutes[F] = {
+  def apply[F[_]: ContextShift: Sync](
+                                       articleRepository: ArticleRepository[F],
+                                       commentRepository: CommentRepository[F],
+                                       userRepo: UserRepo[F],
+                                       auth: RequestAuthenticator[F]
+                                     ): HttpRoutes[F] = {
     object dsl extends Http4sDsl[F]; import dsl._
     object LimitQueryParam extends QueryParamDecoderMatcher[Int]("limit")
     object OffsetQueryParam extends QueryParamDecoderMatcher[Int]("offset")
     import Article._
-    HttpRoutes.of[F] {
-      case GET -> Root / "api" / "articles" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) =>
-        for {
-          arts <- articleRepository.find(limit = Some(limit), offset = Some(offset))
-          res  <- Ok(ArticlesResponse(arts))
-        } yield res
-      case GET -> Root / "api" / "articles" / slag =>
-        articleRepository.get(slag).flatMap {
-          case None => HttpError.notFound(s"cannot find article with $slag slag")
-          case Some(article) => Ok(article)
-        }
-    } <+>
       auth {
         AuthedRoutes.of[Username, F] {
           case req @ POST -> Root / "api" / "articles" as username =>
-            userRepo.find(username).flatMap {
+            userRepo.findProfile(username).flatMap {
               case None => BadRequest()
               case Some(user) =>
                 for {
@@ -47,17 +39,41 @@ object ArticleRoutes {
                     .flatMap(Created(_))
                 } yield response
             }
-
-
-          case GET -> Root / "api" / "articles" / "feed" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) as username =>
+          case req @ POST -> Root / "api" / "articles" as username =>
+            userRepo.findProfile(username).flatMap {
+              case None => BadRequest()
+              case Some(user) =>
+                for {
+                  request <- req.req.as[CreateRequest]
+                  response <- articleRepository
+                    .create(request.title, request.description, request.body, request.tagList, user)
+                    .flatMap(Created(_))
+                } yield response
+            }
+          case GET -> Root / "api" / "articles" / "feed" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) as _ =>
             for {
               arts <- articleRepository.find(limit = Some(limit), offset = Some(offset))
-              _ = println(username)
               res <- Ok(ArticlesResponse(arts))
             } yield res
-
+          case GET -> Root / "api" / "articles" / slag / "comments"  as _ =>
+            for {
+              arts <- commentRepository.find(slag = Some(slag))
+              res <- Ok(CommentsResponse(arts))
+            } yield res
         }
-      }
+      } <+>
+        HttpRoutes.of[F] {
+          case GET -> Root / "api" / "articles" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) =>
+            for {
+              arts <- articleRepository.find(limit = Some(limit), offset = Some(offset))
+              res  <- Ok(ArticlesResponse(arts))
+            } yield res
+          case GET -> Root / "api" / "articles" / slag =>
+            articleRepository.get(slag).flatMap {
+              case None => HttpError.notFound(s"cannot find article with $slag slag")
+              case Some(article) => Ok(article)
+            }
+        }
   }
 
   object Article {
@@ -141,4 +157,32 @@ object ArticleRoutes {
     implicit def entityEncoder[F[_]: Applicative]: EntityEncoder[F, ArticlesResponse] =
       jsonEncoderOf[F, ArticlesResponse]
   }
+
+  case class CommentsResponse(comments: Vector[Comment])
+
+  object CommentsResponse {
+    implicit val encoder: Encoder[CommentsResponse] = (r: CommentsResponse) => Json.obj(
+      "comments" -> Json.fromValues(
+        r.comments.map { a =>
+          Json.obj(
+            "id"           -> Json.fromInt(a.id),
+            "body"           -> Json.fromString(a.body),
+            "createdAt"      -> Json.fromString(a.createdAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)),
+            "updatedAt"      -> Json.fromString(a.updatedAt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)),
+            "author"         -> Json.obj(
+              "username"  -> Json.fromString(a.author.username.value),
+              "bio"       -> a.author.bio.fold(Json.Null)(Json.fromString),
+              "image"     -> a.author.image.fold(Json.Null)(Json.fromString),
+              "following" -> Json.fromBoolean(a.author.following)
+            )
+          )
+        }
+      )
+    )
+
+    implicit def entityEncoder[F[_]: Applicative]: EntityEncoder[F, CommentsResponse] =
+      jsonEncoderOf[F, CommentsResponse]
+  }
+
+
 }

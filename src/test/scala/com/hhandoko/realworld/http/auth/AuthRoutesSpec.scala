@@ -1,4 +1,4 @@
-package com.hhandoko.realworld.auth
+package com.hhandoko.realworld.http.auth
 
 import scala.concurrent.ExecutionContext
 
@@ -9,8 +9,8 @@ import org.http4s.implicits._
 import org.specs2.Specification
 import org.specs2.matcher.MatchResult
 
-import com.hhandoko.realworld.auth.AuthRoutes.{LoginPost, LoginPostPayload}
-import com.hhandoko.realworld.core.{JwtToken, User, Username}
+import com.hhandoko.realworld.http.auth.AuthRoutes.{LoginPost, LoginPostPayload}
+import com.hhandoko.realworld.core.{User, Username}
 
 class AuthRoutesSpec extends Specification { def is = s2"""
 

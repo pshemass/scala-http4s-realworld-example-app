@@ -1,4 +1,4 @@
-package com.hhandoko.realworld.auth
+package com.hhandoko.realworld.http.auth
 
 import cats.Applicative
 import cats.effect.{ContextShift, Sync}

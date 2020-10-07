@@ -9,18 +9,15 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.Logger
 import org.http4s.server.{Server => BlazeServer}
 import pureconfig.module.catseffect.loadConfigF
-import com.hhandoko.realworld.article.{ArticleRepository, ArticleRoutes}
-import com.hhandoko.realworld.auth.{AuthRoutes, AuthService, RequestAuthenticator}
+import com.hhandoko.realworld.repositories.{ArticleRepository, CommentRepository, UserRepo}
+import com.hhandoko.realworld.http.auth.{AuthRoutes, AuthService, RequestAuthenticator}
 import com.hhandoko.realworld.config.{Config, DbConfig}
-import com.hhandoko.realworld.profile.{ProfileRoutes, ProfileService}
-import com.hhandoko.realworld.tag.{TagRoutes, TagService}
-import com.hhandoko.realworld.user.{UserRepo, UserRoutes, UserService}
+import com.hhandoko.realworld.http.{ArticleRoutes, ProfileRoutes, TagRoutes, UserRoutes}
+import com.hhandoko.realworld.profile.ProfileService
+import com.hhandoko.realworld.tag.TagService
 
 import scala.concurrent.ExecutionContext.global
 import org.http4s.server.middleware.CORS
-//import org.http4s.Response
-//import org.http4s.Status
-//import com.hhandoko.realworld.HttpError.ErrorEntity
 
 
 object Server {
@@ -30,20 +27,18 @@ object Server {
       conf <- config[F](bloker)
       xa    <- transactor[F](conf.db)
       articlesRepo = ArticleRepository(xa)
+      commentRepo = CommentRepository(xa)
       userRepo = UserRepo(xa)
     authenticator = new RequestAuthenticator[F]()
     authService = AuthService.impl[F]
     profileService = ProfileService.impl[F]
     tagService = TagService.impl[F]
-    userService = UserService.impl[F]
     routes =
-      ArticleRoutes[F](articlesRepo, userRepo, authenticator) <+>
+      ArticleRoutes[F](articlesRepo, commentRepo, userRepo, authenticator) <+>
       AuthRoutes[F](authService) <+>
       ProfileRoutes[F](profileService) <+>
       TagRoutes[F](tagService) <+>
-      UserRoutes[F](authenticator, userService)
-
-
+      UserRoutes[F](authenticator, userRepo)
       rts   = loggedRoutes(conf, routes)
       svr  <- server[F](conf, rts)
     } yield svr

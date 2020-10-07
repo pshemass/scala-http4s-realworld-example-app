@@ -1,26 +1,26 @@
-package com.hhandoko.realworld.user
+package com.hhandoko.realworld.http
 
 import cats.Applicative
 import cats.effect.{ContextShift, Sync}
 import cats.implicits._
+import com.hhandoko.realworld.core.Username
+import com.hhandoko.realworld.http.auth.RequestAuthenticator
+import com.hhandoko.realworld.repositories.UserRepo
 import io.circe.{Encoder, Json}
 import org.http4s.circe.jsonEncoderOf
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{AuthedRoutes, EntityEncoder, HttpRoutes}
 
-import com.hhandoko.realworld.auth.RequestAuthenticator
-import com.hhandoko.realworld.core.Username
-
 object UserRoutes {
 
-  def apply[F[_]: Sync: ContextShift](authenticated: RequestAuthenticator[F], userService: UserService[F]): HttpRoutes[F] = {
+  def apply[F[_]: Sync: ContextShift](authenticated: RequestAuthenticator[F], userRepo: UserRepo[F]): HttpRoutes[F] = {
     object dsl extends Http4sDsl[F]; import dsl._
 
     authenticated {
       AuthedRoutes.of[Username, F] {
         case GET -> Root / "api" / "user" as username =>
           for {
-            usrOpt <- userService.get(username)
+            usrOpt <- userRepo.findUser(username)
             res    <- usrOpt.fold(NotFound()) { usr =>
               Ok(UserResponse(usr.email, usr.token.value, usr.username.value, usr.bio, usr.image))
             }

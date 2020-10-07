@@ -1,14 +1,14 @@
-package com.hhandoko.realworld.article
+package com.hhandoko.realworld.repositories
 
 import java.time.OffsetDateTime
 
-import com.hhandoko.realworld.core.{Article, Author, Profile, Tag, Username}
-import doobie.implicits._
+import com.hhandoko.realworld.core._
 import doobie._
-import doobie.implicits.javatime._
 import Fragments.whereAndOpt
 import cats.Monad
 import cats.effect.Sync
+import doobie.implicits._
+import doobie.implicits.javatime._
 
 trait ArticleRepository[F[_]] {
 

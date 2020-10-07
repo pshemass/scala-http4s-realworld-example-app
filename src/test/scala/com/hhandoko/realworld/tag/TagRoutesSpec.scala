@@ -1,14 +1,13 @@
 package com.hhandoko.realworld.tag
 
 import scala.concurrent.ExecutionContext
-
 import cats.effect.{ContextShift, IO}
 import org.http4s._
 import org.http4s.implicits._
 import org.specs2.Specification
 import org.specs2.matcher.MatchResult
-
 import com.hhandoko.realworld.core.Tag
+import com.hhandoko.realworld.http.TagRoutes
 
 class TagRoutesSpec extends Specification { def is = s2"""
 

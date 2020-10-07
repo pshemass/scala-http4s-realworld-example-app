@@ -1,15 +1,16 @@
 package com.hhandoko.realworld.user
 
 import scala.concurrent.ExecutionContext
-
 import cats.effect.{ContextShift, IO}
 import org.http4s._
 import org.http4s.implicits._
 import org.specs2.Specification
 import org.specs2.matcher.MatchResult
-
-import com.hhandoko.realworld.auth.RequestAuthenticator
-import com.hhandoko.realworld.core.{JwtToken, User, Username}
+import com.hhandoko.realworld.http.auth.{JwtToken, RequestAuthenticator}
+import com.hhandoko.realworld.core.{Profile, User, Username}
+import com.hhandoko.realworld.http
+import com.hhandoko.realworld.http.UserRoutes
+import com.hhandoko.realworld.repositories.UserRepo
 
 class UserRoutesSpec extends Specification { def is = s2"""
 
@@ -32,7 +33,7 @@ class UserRoutesSpec extends Specification { def is = s2"""
       headers = Headers.of(Header("Authorization", s"Token ${nonExpiringToken.value}"))
     )
 
-    UserRoutes[IO](new RequestAuthenticator[IO], FakeUserService)
+    UserRoutes[IO](new RequestAuthenticator[IO], FakeUserRepo)
       .orNotFound(getCurrentUser)
       .unsafeRunSync()
   }
@@ -46,7 +47,7 @@ class UserRoutesSpec extends Specification { def is = s2"""
       headers = Headers.of(Header("Authorization", s"Token ${invalidToken}"))
     )
 
-    UserRoutes[IO](new RequestAuthenticator[IO], FakeUserService)
+    http.UserRoutes[IO](new RequestAuthenticator[IO], FakeUserRepo)
       .orNotFound(getCurrentUser)
       .unsafeRunSync()
   }
@@ -60,8 +61,12 @@ class UserRoutesSpec extends Specification { def is = s2"""
   private[this] def uriReturns401: MatchResult[Status] =
     retUnauthorized.status must beEqualTo(Status.Unauthorized)
 
-  object FakeUserService extends UserService[IO] {
-    def get(username: Username): IO[Option[User]] = IO.pure {
+  object FakeUserRepo extends UserRepo[IO] {
+    override def findProfile(username: Username): IO[Option[Profile]] = IO.pure {
+      Some(Profile(username, None, None))
+    }
+
+    override def findUser(username: Username): IO[Option[User]] = IO.pure {
       Some(User(username, None, None, s"${username.value}@test.com", nonExpiringToken))
     }
   }

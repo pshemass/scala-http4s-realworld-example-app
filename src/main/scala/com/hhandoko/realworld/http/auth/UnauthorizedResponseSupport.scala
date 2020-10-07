@@ -1,4 +1,4 @@
-package com.hhandoko.realworld.auth
+package com.hhandoko.realworld.http.auth
 
 import org.http4s.Challenge
 import org.http4s.headers.`WWW-Authenticate`

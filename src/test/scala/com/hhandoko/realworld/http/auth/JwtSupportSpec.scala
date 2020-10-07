@@ -1,11 +1,11 @@
-package com.hhandoko.realworld.auth
+package com.hhandoko.realworld.http.auth
 
 import scala.util.Random
 
 import org.specs2.Specification
 import org.specs2.matcher.MatchResult
 
-import com.hhandoko.realworld.core.{JwtToken, Username}
+import com.hhandoko.realworld.core.Username
 
 class JwtSupportSpec extends Specification { def is = s2"""
 

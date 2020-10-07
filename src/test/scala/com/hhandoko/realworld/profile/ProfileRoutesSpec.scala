@@ -1,14 +1,14 @@
 package com.hhandoko.realworld.profile
 
 import scala.concurrent.ExecutionContext
-
 import cats.effect.{ContextShift, IO}
 import org.http4s._
 import org.http4s.implicits._
 import org.specs2.Specification
 import org.specs2.matcher.MatchResult
-
 import com.hhandoko.realworld.core.{Profile, Username}
+import com.hhandoko.realworld.http
+import com.hhandoko.realworld.http.ProfileRoutes
 
 class ProfileRoutesSpec extends Specification { def is = s2"""
 
@@ -35,7 +35,7 @@ class ProfileRoutesSpec extends Specification { def is = s2"""
 
     val getProfile = Request[IO](Method.GET, uri"/api/profile/abc")
 
-    ProfileRoutes[IO](FakeProfileService)
+    http.ProfileRoutes[IO](FakeProfileService)
       .orNotFound(getProfile)
       .unsafeRunSync()
   }

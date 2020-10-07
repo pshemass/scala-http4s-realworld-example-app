@@ -1,5 +1,7 @@
 package com.hhandoko.realworld.core
 
+import com.hhandoko.realworld.http.auth.JwtToken
+
 sealed trait ProfileAttributes {
   def username: Username
   def bio: Option[String]
