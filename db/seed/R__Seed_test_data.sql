@@ -11,12 +11,12 @@ INSERT INTO profile (username, email)
           , ('jane.doe', 'jane.doe@test.com')
           ;
 
-INSERT INTO auth (profile_id, password)
-     SELECT id, 'Secret!'
+INSERT INTO auth (profile_username, password)
+     SELECT username, 'Secret!'
        FROM profile
       WHERE lower(profile.email) = lower('john.doe@test.com');
 
-INSERT INTO auth (profile_id, password)
-     SELECT id, 'Secret!'
+INSERT INTO auth (profile_username, password)
+     SELECT username, 'Secret!'
        FROM profile
       WHERE lower(profile.email) = lower('jane.doe@test.com');

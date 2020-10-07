@@ -9,41 +9,51 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.Logger
 import org.http4s.server.{Server => BlazeServer}
 import pureconfig.module.catseffect.loadConfigF
-
-import com.hhandoko.realworld.article.{ArticleRoutes, ArticleService}
+import com.hhandoko.realworld.article.{ArticleRepository, ArticleRoutes}
 import com.hhandoko.realworld.auth.{AuthRoutes, AuthService, RequestAuthenticator}
 import com.hhandoko.realworld.config.{Config, DbConfig}
 import com.hhandoko.realworld.profile.{ProfileRoutes, ProfileService}
 import com.hhandoko.realworld.tag.{TagRoutes, TagService}
-import com.hhandoko.realworld.user.{UserRoutes, UserService}
+import com.hhandoko.realworld.user.{UserRepo, UserRoutes, UserService}
 
 import scala.concurrent.ExecutionContext.global
 import org.http4s.server.middleware.CORS
+//import org.http4s.Response
+//import org.http4s.Status
+//import com.hhandoko.realworld.HttpError.ErrorEntity
 
 
 object Server {
 
   def run[F[_]: ConcurrentEffect: ContextShift: Timer](bloker: Blocker): Resource[F, BlazeServer[F]] = {
-    val authenticator = new RequestAuthenticator[F]()
-    val articleService = ArticleService.impl[F]
-    val authService = AuthService.impl[F]
-    val profileService = ProfileService.impl[F]
-    val tagService = TagService.impl[F]
-    val userService = UserService.impl[F]
-    val routes =
-      ArticleRoutes[F](articleService) <+>
+    for {
+      conf <- config[F](bloker)
+      xa    <- transactor[F](conf.db)
+      articlesRepo = ArticleRepository(xa)
+      userRepo = UserRepo(xa)
+    authenticator = new RequestAuthenticator[F]()
+    authService = AuthService.impl[F]
+    profileService = ProfileService.impl[F]
+    tagService = TagService.impl[F]
+    userService = UserService.impl[F]
+    routes =
+      ArticleRoutes[F](articlesRepo, userRepo, authenticator) <+>
       AuthRoutes[F](authService) <+>
       ProfileRoutes[F](profileService) <+>
       TagRoutes[F](tagService) <+>
       UserRoutes[F](authenticator, userService)
 
-    for {
-      conf <- config[F](bloker)
-      _    <- transactor[F](conf.db)
-      rts   = loggedRoutes(conf, CORS(routes))
+
+      rts   = loggedRoutes(conf, routes)
       svr  <- server[F](conf, rts)
     } yield svr
   }
+
+  //private[this] def mapError[F[_]: ConcurrentEffect: Sync](response: Response[F]): Response[F] =
+  //  response match {
+  //    case Status.ClientError(_) => response.withEntity(ErrorEntity("error" :: Nil))
+  //    case _ => response
+  //  }
 
   private[this] def config[F[_]: Sync: ContextShift](blocker: Blocker): Resource[F, Config] = {
     import pureconfig.generic.auto._
@@ -62,7 +72,7 @@ object Server {
 
     BlazeServerBuilder[F](global)
       .bindHttp(config.server.port, config.server.host)
-      .withHttpApp(routes.orNotFound)
+      .withHttpApp(CORS(routes.orNotFound))
       .resource
   }
 

@@ -25,7 +25,7 @@ class RequestAuthenticator[F[_]: Monad] extends JwtSupport {
     }
   }
 
-  private val middleware = AuthMiddleware(authUser)
+  private val middleware = AuthMiddleware.withFallThrough(authUser)
 
   def apply(authedService: AuthedRoutes[Username, F]): HttpRoutes[F] = middleware(authedService)
 

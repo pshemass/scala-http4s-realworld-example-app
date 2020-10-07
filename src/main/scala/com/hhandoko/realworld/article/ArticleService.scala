@@ -1,9 +1,8 @@
 package com.hhandoko.realworld.article
 
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 
 import cats.Applicative
-
 import com.hhandoko.realworld.core.{Article, Author, Username}
 
 trait ArticleService[F[_]] {
@@ -31,8 +30,8 @@ object ArticleService {
       description = title,
       body = title,
       tagList = Set.empty,
-      createdAt = ZonedDateTime.now(),
-      updatedAt = ZonedDateTime.now(),
+      createdAt = OffsetDateTime.now(),
+      updatedAt = OffsetDateTime.now(),
       favorited = false,
       favoritesCount = 0,
       author = Author(
