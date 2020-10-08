@@ -3,16 +3,16 @@ package com.hhandoko.realworld.http
 import java.time.format.DateTimeFormatter
 
 import cats.Applicative
-import cats.effect.{ ContextShift, Sync }
+import cats.effect.{ContextShift, Sync}
 import cats.implicits._
 import com.hhandoko.realworld.repositories.CommentRepository
 import com.hhandoko.realworld.http.auth.RequestAuthenticator
-import com.hhandoko.realworld.core.{ Article, Comment, Tag, Username }
-import com.hhandoko.realworld.repositories.{ ArticleRepository, CommentRepository, UserRepo }
+import com.hhandoko.realworld.core.{Article, Comment, Tag, Username}
+import com.hhandoko.realworld.repositories.{ArticleRepository, CommentRepository, UserRepo}
 import io.circe._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
-import org.http4s.{ AuthedRoutes, EntityEncoder, HttpRoutes, _ }
+import org.http4s.{AuthedRoutes, EntityEncoder, HttpRoutes, _}
 
 object ArticleRoutes {
 
@@ -23,8 +23,14 @@ object ArticleRoutes {
     auth: RequestAuthenticator[F]
   ): HttpRoutes[F] = {
     object dsl              extends Http4sDsl[F]; import dsl._
-    object LimitQueryParam  extends QueryParamDecoderMatcher[Int]("limit")
-    object OffsetQueryParam extends QueryParamDecoderMatcher[Int]("offset")
+    object LimitQueryParam  extends OptionalQueryParamDecoderMatcher[Int]("limit")
+    object OffsetQueryParam extends OptionalQueryParamDecoderMatcher[Int]("offset")
+
+    implicit val tagQueryParamDecoder: QueryParamDecoder[Tag] =
+      QueryParamDecoder[String].map(Tag)
+
+    object TagQueryParam extends OptionalQueryParamDecoderMatcher[Tag]("tag")
+
     import Article._
     auth {
       AuthedRoutes.of[Username, F] {
@@ -52,7 +58,7 @@ object ArticleRoutes {
           }
         case GET -> Root / "api" / "articles" / "feed" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) as _ =>
           for {
-            arts <- articleRepository.find(limit = Some(limit), offset = Some(offset))
+            arts <- articleRepository.find(limit = limit, offset = offset)
             res  <- Ok(ArticlesResponse(arts))
           } yield res
         case GET -> Root / "api" / "articles" / slag / "comments" as _                                            =>
@@ -63,9 +69,14 @@ object ArticleRoutes {
       }
     } <+>
       HttpRoutes.of[F] {
-        case GET -> Root / "api" / "articles" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) =>
+        case GET -> Root / "api" / "tags" =>
           for {
-            arts <- articleRepository.find(limit = Some(limit), offset = Some(offset))
+            tags <- articleRepository.allTags
+            res  <- Ok(AllTagsResponse(tags))
+          } yield res
+        case GET -> Root / "api" / "articles" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) +& TagQueryParam(tag) =>
+          for {
+            arts <- articleRepository.find(limit = limit, offset = offset, tag = tag)
             res  <- Ok(ArticlesResponse(arts))
           } yield res
         case GET -> Root / "api" / "articles" / slag                                                =>
@@ -183,6 +194,18 @@ object ArticleRoutes {
 
     implicit def entityEncoder[F[_]: Applicative]: EntityEncoder[F, CommentsResponse] =
       jsonEncoderOf[F, CommentsResponse]
+  }
+
+  final case class AllTagsResponse(tags: Vector[Tag])
+
+  object AllTagsResponse {
+    implicit val encoder: Encoder[AllTagsResponse] = (r: AllTagsResponse) =>
+      Json.obj(
+        "tags" -> Json.fromValues(r.tags.map(_.value).map(Json.fromString))
+      )
+
+    implicit def entityEncoder[F[_]: Applicative]: EntityEncoder[F, AllTagsResponse] =
+      jsonEncoderOf[F, AllTagsResponse]
   }
 
 }

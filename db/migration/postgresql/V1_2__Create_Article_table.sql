@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS article(
     title       VARCHAR NOT NULL,
     description VARCHAR NOT NULL,
     body        VARCHAR NOT NULL,
+    tags        varchar[],
     created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     author_username      VARCHAR    NOT NULL,

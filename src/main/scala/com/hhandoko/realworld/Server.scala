@@ -12,9 +12,8 @@ import pureconfig.module.catseffect.loadConfigF
 import com.hhandoko.realworld.repositories.{ ArticleRepository, CommentRepository, UserRepo }
 import com.hhandoko.realworld.http.auth.{ AuthRoutes, AuthService, RequestAuthenticator }
 import com.hhandoko.realworld.config.{ Config, DbConfig }
-import com.hhandoko.realworld.http.{ ArticleRoutes, ProfileRoutes, TagRoutes, UserRoutes }
+import com.hhandoko.realworld.http.{ ArticleRoutes, ProfileRoutes, UserRoutes }
 import com.hhandoko.realworld.profile.ProfileService
-import com.hhandoko.realworld.tag.TagService
 
 import scala.concurrent.ExecutionContext.global
 import org.http4s.server.middleware.CORS
@@ -31,12 +30,10 @@ object Server {
       authenticator  = new RequestAuthenticator[F]()
       authService    = AuthService.impl[F]
       profileService = ProfileService.impl[F]
-      tagService     = TagService.impl[F]
       routes         =
         ArticleRoutes[F](articlesRepo, commentRepo, userRepo, authenticator) <+>
           AuthRoutes[F](authService) <+>
           ProfileRoutes[F](profileService) <+>
-          TagRoutes[F](tagService) <+>
           UserRoutes[F](authenticator, userRepo)
       rts            = loggedRoutes(conf, routes)
       svr           <- server[F](conf, rts)

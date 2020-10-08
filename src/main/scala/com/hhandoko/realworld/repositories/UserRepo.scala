@@ -25,8 +25,8 @@ object UserRepo {
       sql"""SELECT p.username
            |     , p.bio
            |     , p.image
-           |     , a.email
-           |     , a.token
+           |     , p.email
+           |     , 'aaaa'
            |  FROM profile p join auth a on p.username=a.profile_username WHERE lower(username) = lower(${username.value}) LIMIT 1""".stripMargin
         .query[User]
 
