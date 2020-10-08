@@ -3,16 +3,16 @@ package com.hhandoko.realworld.http
 import java.time.format.DateTimeFormatter
 
 import cats.Applicative
-import cats.effect.{ContextShift, Sync}
+import cats.effect.{ ContextShift, Sync }
 import cats.implicits._
 import com.hhandoko.realworld.repositories.CommentRepository
 import com.hhandoko.realworld.http.auth.RequestAuthenticator
-import com.hhandoko.realworld.core.{Article, Comment, Tag, Username}
-import com.hhandoko.realworld.repositories.{ArticleRepository, CommentRepository, UserRepo}
+import com.hhandoko.realworld.core.{ Article, Comment, Tag, Username }
+import com.hhandoko.realworld.repositories.{ ArticleRepository, CommentRepository, UserRepo }
 import io.circe._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
-import org.http4s.{AuthedRoutes, EntityEncoder, HttpRoutes, _}
+import org.http4s.{ AuthedRoutes, EntityEncoder, HttpRoutes, _ }
 
 object ArticleRoutes {
 
@@ -34,7 +34,7 @@ object ArticleRoutes {
     import Article._
     auth {
       AuthedRoutes.of[Username, F] {
-        case req @ POST -> Root / "api" / "articles" as username                                                  =>
+        case req @ POST -> Root / "articles" as username                                                  =>
           userRepo.findProfile(username).flatMap {
             case None       => BadRequest()
             case Some(user) =>
@@ -45,7 +45,7 @@ object ArticleRoutes {
                               .flatMap(Created(_))
               } yield response
           }
-        case req @ POST -> Root / "api" / "articles" as username                                                  =>
+        case req @ POST -> Root / "articles" as username                                                  =>
           userRepo.findProfile(username).flatMap {
             case None       => BadRequest()
             case Some(user) =>
@@ -56,12 +56,12 @@ object ArticleRoutes {
                               .flatMap(Created(_))
               } yield response
           }
-        case GET -> Root / "api" / "articles" / "feed" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) as _ =>
+        case GET -> Root / "articles" / "feed" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) as _ =>
           for {
             arts <- articleRepository.find(limit = limit, offset = offset)
             res  <- Ok(ArticlesResponse(arts))
           } yield res
-        case GET -> Root / "api" / "articles" / slag / "comments" as _                                            =>
+        case GET -> Root / "articles" / slag / "comments" as _                                            =>
           for {
             arts <- commentRepository.find(slag = Some(slag))
             res  <- Ok(CommentsResponse(arts))
@@ -69,17 +69,17 @@ object ArticleRoutes {
       }
     } <+>
       HttpRoutes.of[F] {
-        case GET -> Root / "api" / "tags" =>
+        case GET -> Root / "tags"                                                                                 =>
           for {
             tags <- articleRepository.allTags
             res  <- Ok(AllTagsResponse(tags))
           } yield res
-        case GET -> Root / "api" / "articles" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) +& TagQueryParam(tag) =>
+        case GET -> Root / "articles" :? LimitQueryParam(limit) +& OffsetQueryParam(offset) +& TagQueryParam(tag) =>
           for {
             arts <- articleRepository.find(limit = limit, offset = offset, tag = tag)
             res  <- Ok(ArticlesResponse(arts))
           } yield res
-        case GET -> Root / "api" / "articles" / slag                                                =>
+        case GET -> Root / "articles" / slag                                                                      =>
           articleRepository.get(slag).flatMap {
             case None          => HttpError.notFound(s"cannot find article with $slag slag")
             case Some(article) => Ok(article)

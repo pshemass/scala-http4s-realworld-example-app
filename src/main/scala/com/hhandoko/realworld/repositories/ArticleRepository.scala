@@ -46,11 +46,12 @@ object ArticleRepository {
              values ($slag, $title, $description, $body, ${tagList.map(_.value).toArray[String]}, ${username})""".update
 
     def find(
-              limit: Option[Int] = None,
-              offset: Option[Int] = None,
-              author: Option[Username] = None,
-              slag: Option[String] = None,
-              tag: Option[Tag] = None) = {
+      limit: Option[Int] = None,
+      offset: Option[Int] = None,
+      author: Option[Username] = None,
+      slag: Option[String] = None,
+      tag: Option[Tag] = None
+    ) = {
       val select      =
         fr"""select
              a.slag,
@@ -67,7 +68,7 @@ object ArticleRepository {
              from article a join profile p on a.author_username=p.username"""
       val authorWhere = author.map(s => fr"p.username = $s")
       val slugWhere   = slag.map(s => fr"a.slag = $s")
-      val tagWhere = tag.map(t => fr"tags @> ARRAY[${t.value}]::varchar[]")
+      val tagWhere    = tag.map(t => fr"tags @> ARRAY[${t.value}]::varchar[]")
 
       val limitSql  = limit.map(limit => fr"LIMIT $limit").getOrElse(Fragment.empty)
       val offsetSql = offset.map(offset => fr"OFFSET $offset").getOrElse(Fragment.empty)
@@ -107,15 +108,16 @@ object ArticleRepository {
           .transact(xa)
 
       override def create(
-                           title: String,
-                           description: String,
-                           body: String,
-                           tagList: Set[Tag],
-                           profile: Profile
+        title: String,
+        description: String,
+        body: String,
+        tagList: Set[Tag],
+        profile: Profile
       ): F[Article] = {
         val slag = title.toLowerCase.replace(' ', '-')
         val now  = OffsetDateTime.now()
-        SQL.create(slag, title, description, body, tagList, profile.username)
+        SQL
+          .create(slag, title, description, body, tagList, profile.username)
           .run
           .map(_ =>
             Article(

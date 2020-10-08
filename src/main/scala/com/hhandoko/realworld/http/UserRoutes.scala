@@ -17,7 +17,7 @@ object UserRoutes {
     object dsl extends Http4sDsl[F]; import dsl._
 
     authenticated {
-      AuthedRoutes.of[Username, F] { case GET -> Root / "api" / "user" as username =>
+      AuthedRoutes.of[Username, F] { case GET -> Root / "user" as username =>
         for {
           usrOpt <- userRepo.findUser(username)
           res    <- usrOpt.fold(NotFound()) { usr =>
@@ -28,7 +28,6 @@ object UserRoutes {
     }
   }
 
-  // TODO: Duplicated in UserRoutes, consolidate
   final case class UserResponse(
     email: String,
     token: String,
@@ -52,5 +51,4 @@ object UserRoutes {
     implicit def entityEncoder[F[_]: Applicative]: EntityEncoder[F, UserResponse] =
       jsonEncoderOf[F, UserResponse]
   }
-
 }

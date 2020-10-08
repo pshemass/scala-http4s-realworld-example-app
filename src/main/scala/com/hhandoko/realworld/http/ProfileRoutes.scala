@@ -4,7 +4,7 @@ import cats.Applicative
 import cats.effect.{ ContextShift, Sync }
 import cats.implicits._
 import com.hhandoko.realworld.core.Username
-import com.hhandoko.realworld.profile.ProfileService
+import com.hhandoko.realworld.repositories.UserRepo
 import io.circe.{ Encoder, Json }
 import org.http4s.circe.jsonEncoderOf
 import org.http4s.dsl.Http4sDsl
@@ -12,12 +12,12 @@ import org.http4s.{ EntityEncoder, HttpRoutes }
 
 object ProfileRoutes {
 
-  def apply[F[_]: ContextShift: Sync](profileService: ProfileService[F]): HttpRoutes[F] = {
+  def apply[F[_]: ContextShift: Sync](userRepo: UserRepo[F]): HttpRoutes[F] = {
     object dsl extends Http4sDsl[F]; import dsl._
 
-    HttpRoutes.of[F] { case GET -> Root / "api" / "profiles" / username =>
+    HttpRoutes.of[F] { case GET -> Root / "profiles" / username =>
       for {
-        prfOpt <- profileService.get(Username(username))
+        prfOpt <- userRepo.findProfile(Username(username))
         res    <- prfOpt.fold(NotFound()) { prf =>
                     Ok(ProfileResponse(prf.username.value, prf.bio, prf.image, following = false))
                   }

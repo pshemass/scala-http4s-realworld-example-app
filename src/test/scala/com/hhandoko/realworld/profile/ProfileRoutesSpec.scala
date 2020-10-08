@@ -6,9 +6,10 @@ import org.http4s._
 import org.http4s.implicits._
 import org.specs2.Specification
 import org.specs2.matcher.MatchResult
-import com.hhandoko.realworld.core.{ Profile, Username }
+import com.hhandoko.realworld.core.{ Profile, User, Username }
 import com.hhandoko.realworld.http
 import com.hhandoko.realworld.http.ProfileRoutes
+import com.hhandoko.realworld.repositories.UserRepo
 
 class ProfileRoutesSpec extends Specification {
   def is = s2"""
@@ -53,11 +54,14 @@ class ProfileRoutesSpec extends Specification {
   private[this] def notFoundReturns404: MatchResult[Status] =
     retNotFoundProfile.status must beEqualTo(Status.NotFound)
 
-  object FakeProfileService extends ProfileService[IO] {
-    def get(username: Username): IO[Option[Profile]] = IO.pure {
+  object FakeProfileService extends UserRepo[IO] {
+    override def findProfile(username: Username): IO[Option[Profile]] = IO.pure {
       if (username.value.startsWith("celeb_")) Some(Profile(username, None, None))
       else None
     }
+
+    override def findUser(username: Username): IO[Option[User]] =
+      IO.raiseError(new RuntimeException("not implemented"))
   }
 
 }

@@ -7,13 +7,12 @@ import doobie.util.ExecutionContexts
 import org.http4s.HttpRoutes
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.Logger
-import org.http4s.server.{ Server => BlazeServer }
+import org.http4s.server.{ Router, Server => BlazeServer }
 import pureconfig.module.catseffect.loadConfigF
 import com.hhandoko.realworld.repositories.{ ArticleRepository, CommentRepository, UserRepo }
 import com.hhandoko.realworld.http.auth.{ AuthRoutes, AuthService, RequestAuthenticator }
 import com.hhandoko.realworld.config.{ Config, DbConfig }
 import com.hhandoko.realworld.http.{ ArticleRoutes, ProfileRoutes, UserRoutes }
-import com.hhandoko.realworld.profile.ProfileService
 
 import scala.concurrent.ExecutionContext.global
 import org.http4s.server.middleware.CORS
@@ -22,21 +21,22 @@ object Server {
 
   def run[F[_]: ConcurrentEffect: ContextShift: Timer](bloker: Blocker): Resource[F, BlazeServer[F]] =
     for {
-      conf          <- config[F](bloker)
-      xa            <- transactor[F](conf.db)
-      articlesRepo   = ArticleRepository(xa)
-      commentRepo    = CommentRepository(xa)
-      userRepo       = UserRepo(xa)
-      authenticator  = new RequestAuthenticator[F]()
-      authService    = AuthService.impl[F]
-      profileService = ProfileService.impl[F]
-      routes         =
+      conf         <- config[F](bloker)
+      xa           <- transactor[F](conf.db)
+      articlesRepo  = ArticleRepository(xa)
+      commentRepo   = CommentRepository(xa)
+      userRepo      = UserRepo(xa)
+      authenticator = new RequestAuthenticator[F]()
+      authService   = AuthService.impl[F]
+      routes        =
         ArticleRoutes[F](articlesRepo, commentRepo, userRepo, authenticator) <+>
           AuthRoutes[F](authService) <+>
-          ProfileRoutes[F](profileService) <+>
+          ProfileRoutes[F](userRepo) <+>
           UserRoutes[F](authenticator, userRepo)
-      rts            = loggedRoutes(conf, routes)
-      svr           <- server[F](conf, rts)
+      rts           = Router[F](
+                        "api" -> loggedRoutes(conf, routes)
+                      )
+      svr          <- server[F](conf, rts)
     } yield svr
 
   //private[this] def mapError[F[_]: ConcurrentEffect: Sync](response: Response[F]): Response[F] =
